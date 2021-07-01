@@ -1,0 +1,60 @@
+﻿@page "/FutureValue"
+
+
+<form>
+    <div class="form-row">
+        <label class=" col-3 col-form-label col-form-label-lg" for="inlineFormInput">Principal</label>
+        <div class="col-3 ">
+            <input type="text" @bind="@Principal" class="form-control d-inline-block" aria-label="Dollar amount" placeholder="$">
+        </div>
+    </div>
+    <div class="form-row">
+        <label class="col-3 col-form-label-lg" for="inlineFormInput">Interest Rate</label>
+        <div class="col-auto">
+            <input type="text" @bind-value="@InterestRate" class="form-control" aria-label="Dollar amount" placeholder="%">
+        </div>
+    </div>
+    <div class="form-row">
+        <label class="col-3 col-form-label-lg" for="inlineFormInput">Conversion period</label>
+        <div class="col-auto">
+            <input placeholder="#" type="text" @bind-value="@ConversionPeriod" class="form-control" aria-label="Conversion periods" />
+        </div>
+    </div>
+    <div class="form-row">
+        <label class="col-3 col-form-label-lg" for="inlineFormInput">Time</label>
+        <div class="col-auto">
+            <input type="number" @bind-value="@Time" class="form-control" aria-label="Time in years" placeholder="# of years">
+        </div>
+    </div>
+
+    <div class="form-row">
+        <button type="button" class="submitbtn col-2 btn btn-primary" @onclick="getAccumulated">Submit</button>
+    </div>
+
+    <hr />
+    
+    <span>Accumulated value: @Accumulated</span>
+</form>
+
+
+
+
+
+
+@code {
+    public double? Principal { get; set; }
+    public double? InterestRate { get; set; }
+    public int? ConversionPeriod { get; set; }
+    public double? Time { get; set; }
+
+    public double Accumulated { get; set; } = 0;
+
+
+    //Get the accumulated value based on form input
+    public void getAccumulated()
+    {
+        Accumulated= (double)Principal * Math.Pow((double)(1 + ((InterestRate/100) / ConversionPeriod)),(double)(ConversionPeriod*Time));
+        Accumulated = Math.Round(Accumulated, 2, MidpointRounding.AwayFromZero);
+    }
+
+}
