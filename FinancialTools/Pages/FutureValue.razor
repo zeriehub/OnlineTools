@@ -1,60 +1,203 @@
 ﻿@page "/FutureValue"
+@using ChartJs.Blazor.LineChart
 
 
-<form>
-    <div class="form-row">
-        <label class=" col-3 col-form-label col-form-label-lg" for="inlineFormInput">Principal</label>
-        <div class="col-3 ">
-            <input type="text" @bind="@Principal" class="form-control d-inline-block" aria-label="Dollar amount" placeholder="$">
-        </div>
-    </div>
-    <div class="form-row">
-        <label class="col-3 col-form-label-lg" for="inlineFormInput">Interest Rate</label>
-        <div class="col-auto">
-            <input type="text" @bind-value="@InterestRate" class="form-control" aria-label="Dollar amount" placeholder="%">
-        </div>
-    </div>
-    <div class="form-row">
-        <label class="col-3 col-form-label-lg" for="inlineFormInput">Conversion period</label>
-        <div class="col-auto">
-            <input placeholder="#" type="text" @bind-value="@ConversionPeriod" class="form-control" aria-label="Conversion periods" />
-        </div>
-    </div>
-    <div class="form-row">
-        <label class="col-3 col-form-label-lg" for="inlineFormInput">Time</label>
-        <div class="col-auto">
-            <input type="number" @bind-value="@Time" class="form-control" aria-label="Time in years" placeholder="# of years">
-        </div>
-    </div>
+<div class="container">
+    <form>
+        <div class="form-container">
+            @*Principal amount for calculation*@
+            <div class="form-row row ">
+                <label class=" col-4 col-form-label col-form-label-lg" for="inlineFormInput">Principal</label>
 
-    <div class="form-row">
-        <button type="button" class="submitbtn col-2 btn btn-primary" @onclick="getAccumulated">Submit</button>
-    </div>
+                <input type="text" @bind="@Principal" class=" col form-control d-block" aria-label="Dollar amount" placeholder="$">
 
+            </div>
+
+            @*Interest rate for calculation*@
+            <div class="form-row row ">
+                <label class="col-4 col-form-label-lg" for="inlineFormInput">Interest Rate</label>
+
+                <input type="text" @bind-value="@InterestRate" class="col form-control d-block" aria-label="Dollar amount" placeholder="%">
+
+            </div>
+
+
+            @*Conversion period for calculation*@
+            <div class="form-row row ">
+                <label class="col-4 col-form-label-lg" for="inlineFormInput">Conversion period</label>
+
+                <input placeholder="#" type="text" @bind-value="@ConversionPeriod" class="col form-control" aria-label="Conversion periods" />
+
+            </div>
+
+            @*Number of years. Fractions can be used to specify number of months*@
+            <div class="form-row row ">
+                <label class="col-4 col-form-label-lg" for="inlineFormInput">Time</label>
+
+                <input type="number" @bind-value="@Time" class="col form-control" aria-label="Time in years" placeholder="# of years">
+
+            </div>
+
+            <div class="form-row row col-1">
+                <button type="button" class="submitbtn col-1 btn btn-primary" @onclick="getGrowth">Submit</button>
+            </div>
+
+        </div>
+
+
+    </form>
     <hr />
-    
-    <span>Accumulated value: @Accumulated</span>
-</form>
 
 
+    @*Line Chart based on ChartJS.Blazor*@
+    <div class="chartCSS">
+        <Chart Config="_config" @ref="_chart"></Chart>
+    </div>
 
-
+    @*Statement summarizing the growth based on the input*@
+    @if (showCard) { 
+    <div class="info-card mt-3">
+        A principal deposit of $<strong>@Principal</strong> with an interest rate of <strong>@InterestRate%</strong>
+        Will grow to $<strong>@totalGrowth</strong> within <strong>@Time</strong> year/s
+    </div>
+    }
+</div>
 
 
 @code {
-    public double? Principal { get; set; }
-    public double? InterestRate { get; set; }
-    public int? ConversionPeriod { get; set; }
-    public double? Time { get; set; }
 
-    public double Accumulated { get; set; } = 0;
+    
+    private LineConfig _config;
+    private Chart _chart;
+    private bool showCard = false;
 
 
-    //Get the accumulated value based on form input
-    public void getAccumulated()
+    //Variables that will hold data input
+    public double Principal;
+    public double InterestRate { get; set; }
+    public int ConversionPeriod { get; set; }
+    public double Time { get; set; }
+
+    //Total growth over time
+    public double totalGrowth { get; set; } = 0;
+
+    //To hold the weekly growth 
+    List<double> weeklyGrowth = new List<double>();
+
+    //Get the accumulated value based on input
+    public void getGrowth()
     {
-        Accumulated= (double)Principal * Math.Pow((double)(1 + ((InterestRate/100) / ConversionPeriod)),(double)(ConversionPeriod*Time));
-        Accumulated = Math.Round(Accumulated, 2, MidpointRounding.AwayFromZero);
+        showCard = true;
+        weeklyGrowth.Clear();
+        double Temp = Principal;
+        double TimeinWeeks = Time * 52.0;
+        double WeeklyAccumulation = 0.0;
+        for (double i = 0; i < TimeinWeeks; i++)
+        {
+            WeeklyAccumulation = Temp * Math.Pow((1 + ((InterestRate / 100) / ConversionPeriod)), (ConversionPeriod * 0.019230769));
+            Temp = WeeklyAccumulation;
+            weeklyGrowth.Add(WeeklyAccumulation);
+        }
+
+        totalGrowth = (double)Principal * Math.Pow((double)(1 + ((InterestRate / 100) / ConversionPeriod)), (double)(ConversionPeriod * Time));
+        totalGrowth = Math.Round(totalGrowth, 2, MidpointRounding.AwayFromZero);
+
+        populateChart();
+    }
+
+
+
+
+    protected override void OnInitialized()
+    {
+        _config = new LineConfig
+        {
+            Options = new LineOptions
+            {
+                Responsive = true,
+                Title = new OptionsTitle
+                {
+                    Display = true,
+                    Text = "Growth Chart"
+                },
+                Tooltips = new Tooltips
+                {
+                    Mode = InteractionMode.Nearest,
+                    Intersect = true
+                },
+                Hover = new Hover
+                {
+                    Mode = InteractionMode.Nearest,
+                    Intersect = true
+                },
+                Scales = new Scales
+                {
+                    XAxes = new List<CartesianAxis>
+                {
+                        new TimeAxis
+                            {
+                                Distribution = TimeDistribution.Linear,
+                                Ticks = new TimeTicks
+                                {
+                                    Source = TickSource.Auto,
+                                    AutoSkip = true,
+                                    AutoSkipPadding = 60,
+                                },
+                                Time = new TimeOptions
+                                {
+                                    Unit = TimeMeasurement.Week,
+                                    TooltipFormat = "MM/DD/YYYY"
+                                },
+                                GridLines = new GridLines
+                                {
+                                    Display = true
+                                }
+                            }
+                    },
+                    YAxes = new List<CartesianAxis>
+                {
+                        new LinearCartesianAxis
+                        {
+                            ScaleLabel = new ScaleLabel
+                            {
+                                LabelString = "Value"
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+    }
+
+
+
+    public void populateChart()
+    {
+
+        _config.Data.Datasets.Clear();
+
+      
+
+        IDataset<TimePoint> dataset4 = new LineDataset<TimePoint>()
+        {
+            Label = "Growth",
+            BorderColor = ColorUtil.FromDrawingColor(ChartColors.Green),
+            Fill = FillingMode.Origin
+        };
+
+        DateTime now = DateTime.Now;
+        foreach (double Acc in weeklyGrowth)
+        {
+            dataset4.Add(new TimePoint(now.AddDays(7), Acc));
+            now = now.AddDays(7);
+        }
+
+
+        _config.Data.Datasets.Add(dataset4);
+        _chart.Update();
+
+
     }
 
 }

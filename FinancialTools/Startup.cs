@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using FinancialTools.MVVM;
 
 namespace FinancialTools
 {
@@ -28,7 +29,10 @@ namespace FinancialTools
         {
             services.AddRazorPages();
             services.AddServerSideBlazor();
-            
+            services.AddRazorPages().AddRazorRuntimeCompilation();
+            services.AddHttpClient();
+            services.AddSingleton<ITodoHandler,TodoHandler>();
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -37,6 +41,7 @@ namespace FinancialTools
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                app.UseBrowserLink();
             }
             else
             {

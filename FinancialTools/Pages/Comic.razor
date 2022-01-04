@@ -1,0 +1,82 @@
+﻿@page "/Comic"
+
+
+
+<div class="comic-container">
+    <img src="@sourceUri" />
+
+    @if (Loading)
+    {
+        <div class="spinner-border" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
+
+    }
+    <div id="comic-buttons">
+        <button type="button" class="btn m-1 btn-dark" @onclick="LoadPreviousComic"> Prev </button>
+        <button type="button" class="btn m-1 btn-dark" @onclick="LoadNextComic"> Next </button>
+    </div>
+</div>
+
+
+
+@code {
+
+
+
+        string ur;
+        Uri sourceUri;
+        int CurrentComicNum;
+        bool Loading = true;
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        ApiHelper.InitializeApiClient();
+        if (sourceUri is null)
+            Loading = true;
+        var Num = await ComicProcessor.LoadComic(0);
+        sourceUri = new Uri(Num.img, UriKind.Absolute);
+        CurrentComicNum = Num.num;
+    }
+
+
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+
+        if (sourceUri != null)
+            Loading = false;
+        base.OnAfterRender(firstRender);
+        StateHasChanged();
+    }
+
+
+    public async void LoadPreviousComic()
+    {
+        CurrentComicNum -= 1;
+        var comicImg = await ComicProcessor.LoadComic(CurrentComicNum);
+        ur = comicImg.img;
+        sourceUri = new Uri(ur, UriKind.Absolute);
+        StateHasChanged();
+    }
+
+    public async void LoadNextComic()
+    {
+        var Num = await ComicProcessor.LoadComic(0);
+
+        if (CurrentComicNum == Num.num)
+        {
+            CurrentComicNum = Num.num;
+        }
+        else
+        {
+            CurrentComicNum += 1;
+        }
+        var comicImg = await ComicProcessor.LoadComic(CurrentComicNum);
+        ur = comicImg.img;
+        sourceUri = new Uri(ur, UriKind.Absolute);
+        StateHasChanged();
+    }
+}

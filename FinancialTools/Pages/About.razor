@@ -1,0 +1,40 @@
+﻿@page "/About"
+@layout HomeLayout
+
+
+<div class=" description-card">
+
+    @if (!descriptionsEntered)
+    {
+    <strong class="mt-2" style="font-size: 2em;">Describe yourself in three words</strong>
+    <div>
+        <strong>
+
+            <input @bind="First" type="text" size="5" class="borderless_input"> ,
+            <input @bind="Second" type="text" size="5" class="borderless_input">,
+            <input @bind="Third" type="text" size="5" class="borderless_input">
+
+        </strong>
+    </div>
+    <button type="button" class="btn btn-dark" @onclick="save">Submit</button>
+    }
+
+    else { 
+<strong>You are @First, @Second, and @Third</strong>
+    }
+</div>
+
+
+
+@code {
+    public string First { get; set; }
+    public string Second { get; set; }
+    public string Third { get; set; }
+    public bool descriptionsEntered = false;
+
+    public void save()
+    {
+        descriptionsEntered = true;
+        StateHasChanged();
+    }
+}
